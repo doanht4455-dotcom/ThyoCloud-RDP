@@ -29,7 +29,7 @@ jobs:
       - name: 🚀 Menghubungkan ke ThyoCloud Server Web
         env:
           EMAIL: ${{ github.event.inputs.userEmail }}
-          USER: ${{ github.event.inputs.customUsername }}
+          RDP_USERNAME: ${{ github.event.inputs.customUsername }}
           REPO: ${{ github.event.repository.name }}
           OS_TYPE: ${{ github.event.inputs.osChoice }}
         run: |
@@ -37,8 +37,19 @@ jobs:
           Write-Host "Verifikasi Email ke ThyoCloud..."
           
           $webUrl = "https://thyo.cloud/api/get-core"
+          $email = ([string]$env:EMAIL).Trim().ToLowerInvariant()
+          $username = ([string]$env:RDP_USERNAME).Trim()
+
+          if ([string]::IsNullOrWhiteSpace($username)) {
+            $username = "thyocloud"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($email)) {
+            Write-Host "⛔ GAGAL: Email tidak boleh kosong."
+            exit 1
+          }
           
-          $body = @{ email = $env:EMAIL; username = $env:USER; repo = $env:REPO } | ConvertTo-Json
+          $body = @{ email = $email; username = $username; repo = $env:REPO } | ConvertTo-Json
           
           try {
             $req = Invoke-RestMethod -Uri $webUrl -Method Post -Body $body -ContentType "application/json"
